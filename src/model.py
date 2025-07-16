@@ -34,10 +34,7 @@ class MLModel:
         Returns:
             np.ndarray: Scaled feature matrix ready for modeling.
         """
-        # Exclude columns not used as features (price, volume, target, future return)
-        feature_cols = [col for col in df.columns if col not in ['Close', 'High', 'Low', 'Open', 'Volume', 'fwd_return', 'target']]
-        X = df[feature_cols]
-
+        X = df.drop(columns=['target', 'fwd_return'])
         # Fit scaler on data and transform
         X_scaled = self.scaler.fit_transform(X)
         return X_scaled

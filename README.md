@@ -41,15 +41,15 @@ This project explores a hybrid quantitative trading strategy that enhances a tra
 ## Early Findings
 
 - The ML-enhanced strategy can outperform the pure EMA strategy in some out-of-sample tests
-- High-confidence thresholds (e.g., ≥0.5) allow ML to act selectively, improving risk-adjusted return for certain scenarios
-- Overriding too frequently (low threshold) hurts performance — ML must be confident to add value
+- High-confidence thresholds (e.g., ≥0.5) allow ML to act selectively and can improve risk-adjusted return
+- Overriding too frequently (low threshold) can reduce performance — ML must be confident to add value
 - The improvements appear more significant when the rule-based baseline is simple (e.g., EMA crossover)
 
 
 > Example: AAPL stock (1.3-year daily data, out-of-sample)
 > - Buy-and-hold return: ~143%
 > - Baseline EMA strategy return: ~136%
-> - ML-augmented strategy return: ~147% 
+> - ML-augmented strategy return: ~152% 
 >
 > ![Cumulative return comparison](images/cum_return_comp.png)
 
@@ -57,6 +57,5 @@ This project explores a hybrid quantitative trading strategy that enhances a tra
 
 ## Acknowledgements
 
-Parts of the backtesting logic, including the EMA crossover momentum strategy, are adapted from the Korean quant finance book  
-**"Building Quant Investment Portfolios Using Python"** by **Jo Daepyo**.  
+Parts of the backtesting logic, including the EMA crossover momentum strategy, are adapted from the Korean quant finance book "Building Quant Investment Portfolios Using Python" by Jo Daepyo.  
 All machine learning enhancements and additional development were implemented independently.
