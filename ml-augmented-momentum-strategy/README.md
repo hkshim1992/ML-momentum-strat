@@ -14,7 +14,7 @@
 * To what extent can using various signals, ranging from technical indicators to various aggregate statistics, help improve performance?
 * (The simple EMA crossover strategy is a simplistic example, but the goal here is to investigate the effect of ML on stock returns)
 
-## Result (Strict Out-of-Sample)
+## Results
 
 Main claim in this repository is based on strict out-of-sample (OOS) testing with no future-label leakage in inference:
 
@@ -37,9 +37,9 @@ Interpretation:
 * Buy-and-hold still outperformed both active strategies in this window.
 * Performance is threshold-sensitive: with fixed `ml_threshold=0.5`, MAC-ML returned `+2.73%` (below MAC baseline).
 
-### Strict OOS Visualization
+### Cumulative Return Comparison
 
-![Cumulative return comparison (strict OOS)](images/cum_return_comp_oos.png)
+![Cumulative return comparison](images/cum_return_comp_oos.png)
 
 ## CLI Usage
 
