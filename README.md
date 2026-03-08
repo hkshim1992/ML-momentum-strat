@@ -1,61 +1,108 @@
-# ML-Augmented Momentum Strategy
+# Project: ML-Augmented Momentum Strategy
 
 ## Overview
+* Goal: How best to buy and hold a stock to maximize its return, where you can buy and hold however much you want?
+* Hybrid approach that combines a simple momentum-based strategy---EMA crossover strategy---with supervised ML model overlays
+* ML model that selectively override the momentum-based strategy if the confidence score exceeds some threshold
+* Data is sourced from Yahoo Finance
+* Functionalities include backtesting, parameter optimization of EMA windows, and out-of-sample dataset evaluation
 
-This project explores a hybrid quantitative trading strategy that enhances a traditional momentum signal—Exponential Moving Average (EMA) crossover—with a supervised machine learning overlay. The goal is to study whether ML can selectively override rule-based signals to improve overall return and signal quality.
+## Motivation
+* The EMA crossover, momentum-based strategy only considers the long and short term trends in stock price, neglecting any other factors
+* This can be a useful first step, but how to incorporate additional signals?
+* What if we combine the elements of both this momentum-based approach with ML-based classifier that can override when it is fairly certain whether to buy or sell the stock?
+* To what extent can using various signals, ranging from technical indicators to various aggregate statistics, help improve performance?
+* (The simple EMA crossover strategy is a simplistic example, but the goal here is to investigate the effect of ML on stock returns)
 
-- **Base strategy**: Buy/sell based on short vs. long EMA crossover
-- **ML overlay**: A classifier model (e.g., logistic regression) overrides signals if its prediction confidence is high
-- **Data**: Daily stock prices from Yahoo Finance via `yfinance`
-- **Evaluation**: Out-of-sample backtesting with parameter optimization of EMA windows
+## Result
+* The hybrid (momentum + ML) approach can surpass pure momentum-based approach
+* However, this conclusion is still tentative, and the result only holds for certain time horizon and stocks
+* The real question is, under which conditions can this hybrid approach outperform momentum-based approach?
+* Also, a simple buy-and-hold strategy can already outperform the momentum-based approach
 
----
+![Cumulative return comparison](images/cum_return_comp.png)
 
-## Project Goals
+## CLI Usage
 
-- Evaluate whether ML overlays can improve traditional rule-based signals
-- Learn to build and backtest trading strategies using Python
-- Demonstrate applied skills in ML and alpha generation
+This project now includes a CLI for training, prediction, backtesting, and visualization.
 
----
+Run from project root:
 
-## Strategy Breakdown
+```bash
+python -m src.cli --help
+```
 
-- **Base Strategy**: Momentum using short/long EMA crossover (buy when short EMA > long EMA and sell vice versa)
-- **ML Model Overlay**: Overrides the base strategy if the model's confidence score is above threshold
-  - Trained on hand-crafted features (momentum indicators, volatility, volume, etc.)
-  - Threshold for confidence score is tunable, but fixed at 0.5 for simplicity now
+### 1) Train
 
----
+From Yahoo Finance:
 
-## Evaluation
+```bash
+python -m src.cli train \
+  --ticker AAPL --start 2018-01-01 --end 2024-12-31 \
+  --threshold-mode auto --val-ratio 0.2 \
+  --model-out artifacts/model.pkl
+```
 
-- Backtesting is performed on historical data
-- Strategy returns are compared with:
-  - Baseline EMA-only strategy
-  - Buy-and-hold benchmark
-- Parameters (EMA window lengths) are optimized using brute-force grid search
+From CSV (must include `Date, Open, High, Low, Close, Volume`):
 
----
+```bash
+python -m src.cli train \
+  --csv data/aapl.csv --date-column Date \
+  --threshold-mode auto --val-ratio 0.2 \
+  --model-out artifacts/model.pkl
+```
 
-## Early Findings
+### 2) Predict
 
-- The ML-enhanced strategy can outperform the pure EMA strategy in some out-of-sample tests
-- High-confidence thresholds (e.g., ≥0.5) allow ML to act selectively and can improve risk-adjusted return
-- Overriding too frequently (low threshold) can reduce performance — ML must be confident to add value
-- The improvements appear more significant when the rule-based baseline is simple (e.g., EMA crossover)
+```bash
+python -m src.cli predict \
+  --model-in artifacts/model.pkl \
+  --ticker AAPL --start 2024-01-01 --end 2024-12-31 \
+  --output artifacts/predictions.csv
 
+# Optional: override saved threshold
+# --threshold 0.65
 
-> Example: AAPL stock (1.3-year daily data, out-of-sample)
-> - Buy-and-hold return: ~143%
-> - Baseline EMA strategy return: ~136%
-> - ML-augmented strategy return: ~152% 
->
-> ![Cumulative return comparison](images/cum_return_comp.png)
+# Output columns:
+# open, high, low, close, volume, prediction, prob_up, signal, threshold_used
+# where signal is:
+#   1 -> high-confidence buy (prob_up >= threshold)
+#   0 -> high-confidence sell (prob_up <= 1 - threshold)
+#  -1 -> no-action zone
+```
 
----
+### 3) Backtest (+ Optional Plots)
+
+Rule-based MAC:
+
+```bash
+python -m src.cli backtest \
+  --ticker AAPL --start 2018-01-01 --end 2024-12-31 \
+  --strategy mac --short-window 10 --long-window 30 \
+  --output artifacts/backtest_mac.csv
+```
+
+ML-augmented MAC:
+
+```bash
+python -m src.cli backtest \
+  --ticker AAPL --start 2018-01-01 --end 2024-12-31 \
+  --strategy mac-ml --short-window 10 --long-window 30 \
+  --threshold-mode auto --val-ratio 0.2 \
+  --plot-strategy --plot-cumulative \
+  --output artifacts/backtest_mac_ml.csv
+```
+
+### 4) Visualize Saved Results
+
+```bash
+python -m src.cli visualize \
+  --results-csv artifacts/backtest_mac_ml.csv \
+  --mode both --ticker-label AAPL
+```
 
 ## Acknowledgements
 
-Parts of the backtesting logic, including the EMA crossover momentum strategy, are adapted from the Korean quant finance book "Building Quant Investment Portfolios Using Python" by Jo Daepyo.  
+Parts of the backtesting logic, including the EMA crossover momentum strategy, are adapted from the Korean quant finance book  
+**"Building Quant Investment Portfolios Using Python"** by **Jo Daepyo**.  
 All machine learning enhancements and additional development were implemented independently.

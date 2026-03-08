@@ -82,22 +82,28 @@ def mac_strategy_ml(
         pd.DataFrame: Data with combined signals, positions, and returns.
         float: Final cumulative return of the strategy.
     """
-    # Step 1: Generate features and get ML predictions
-    df_ml = generate_features(df)
+    if not 0.5 <= ml_threshold < 1.0:
+        raise ValueError("ml_threshold must be in [0.5, 1.0).")
 
-    # Predict class labels (0/1) and probabilities for positive class
-    pred_labels = ml_model.predict(df_ml)
+    # Step 1: Generate features and get ML predictions.
+    # Do not create future-dependent labels for inference-time signals.
+    df_ml = generate_features(df, include_target=False)
+    if df_ml.empty:
+        raise ValueError("No feature rows available for ML strategy.")
+
+    # Predict probability for positive class
     ml_probs = ml_model.predict_proba(df_ml)
+    ml_probs_series = pd.Series(ml_probs, index=df_ml.index, name="ML_Prob_Up")
 
     # Initialize ML signals series with default -1 (indicating no/low confidence)
     ml_signals = pd.Series(-1, index=df_ml.index)
 
-    # Mask rows with high-confidence predictions based on threshold
-    high_conf = (~np.isnan(ml_probs)) & (ml_probs >= ml_threshold)
-
-    # Set ML signals to 1 (buy) or 0 (sell) where model is confident
-    ml_signals.loc[high_conf & (pred_labels == 1)] = 1
-    ml_signals.loc[high_conf & (pred_labels == 0)] = 0
+    # Symmetric confidence band:
+    #   buy  -> p(up) >= t
+    #   sell -> p(up) <= (1 - t)
+    lower_threshold = 1.0 - ml_threshold
+    ml_signals.loc[ml_probs_series >= ml_threshold] = 1
+    ml_signals.loc[ml_probs_series <= lower_threshold] = 0
 
     # Step 2: Compute rule-based EMA crossover signals
     df_rule_base = df.copy()
@@ -113,6 +119,8 @@ def mac_strategy_ml(
     # Step 4: Combine ML and rule-based signals
     # ML signal overrides rule signal if confident; otherwise use rule signal
     data = df_rule_base.copy()
+    data['ML_Prob_Up'] = ml_probs_series.reindex(df_rule_base.index)
+    data['ML_Signal'] = ml_signals
     data['Position'] = np.where(
         ml_signals == 1, 1,
         np.where(ml_signals == 0, 0, rule_signals)

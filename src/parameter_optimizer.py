@@ -19,7 +19,7 @@ def parameter_optimizer1(input_df, strat):
     print(f'Optimal Parameters:{optimal_params[0], optimal_params[1]}, '
     f'Optimized Return:{100*optimal_params[2]:.2f}%')
 
-    optimal_df = strat(df, *optimal_params[:2])[0]
+    optimal_df = strat(input_df.copy(), *optimal_params[:2])[0]
 
     return optimal_params, optimal_df, param_results_df
 
@@ -45,6 +45,6 @@ def parameter_optimizer1b(input_df, strat, **kwargs):
     print(f'Optimal Parameters:{opt_param1, opt_param2}, '
     f'Optimized Return:{100*max_ror:.2f}%')
 
-    optimal_df = strat(df, opt_param1, opt_param2, **kwargs)[0]
+    optimal_df = strat(input_df.copy(), opt_param1, opt_param2, **kwargs)[0]
 
     return (opt_param1, opt_param2), optimal_df, param_results_df

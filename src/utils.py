@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import yfinance as yf
 from datetime import datetime
 
 def plot_strategy(data: pd.DataFrame, ticker: str):
@@ -55,9 +54,10 @@ def plot_cumulative_returns(strategies: dict, ticker: str = ''):
         linestyle = linestyles[i % len(linestyles)]
         plt.plot(series.index, series, label=name, color=color, linestyle=linestyle)
 
-    plt.title(f'Cumulative Returns Comparison {f'for {ticker}' if ticker else ''}', fontsize=18)
-    plt.xlabel('Date', fontsize=12)
-    plt.ylabel('Cumulative Return', fontsize=12)
+    title_suffix = f' for {ticker}' if ticker else ''
+    plt.title(f'Cumulative Returns Comparison{title_suffix}')
+    plt.xlabel('Date')
+    plt.ylabel('Cumulative Return')
     plt.legend(fontsize=12)
     plt.grid(alpha=0.3)
 
@@ -81,6 +81,7 @@ def tear_sheet1(data: pd.DataFrame):
     Args:
         data (pd.DataFrame): Data with columns including 'Close', 'Cumulative_Return', 'Signal'.
     """
+    data = data.copy()
     trading_days_per_year = 252
     trading_period = len(data) / trading_days_per_year  # in years
     print(f'Trading Period: {trading_period:.1f} years')
@@ -100,7 +101,7 @@ def tear_sheet1(data: pd.DataFrame):
     strategy_daily_return = data['Cumulative_Return'].pct_change().fillna(0)
     mean_return = strategy_daily_return.mean() * trading_days_per_year
     std_return = strategy_daily_return.std() * np.sqrt(trading_days_per_year)
-    sharpe_ratio = (mean_return - risk_free_rate) / std_return
+    sharpe_ratio = np.nan if std_return == 0 else (mean_return - risk_free_rate) / std_return
     print(f'Sharpe Ratio: {sharpe_ratio:.2f}')
 
     # Maximum Drawdown (MDD) for strategy
@@ -183,6 +184,8 @@ def rolling_test(ticker: str, date: str, strat, opt, **kwargs):
     Returns:
         tuple: CAGR_strategy, MDD_strategy, CAGR_benchmark, MDD_benchmark.
     """
+    import yfinance as yf
+
     middle_date = date
     middle_date_dt = datetime.strptime(middle_date, '%Y-%m-%d')
     start_date_dt = middle_date_dt.replace(year=middle_date_dt.year - 5)
