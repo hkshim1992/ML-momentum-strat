@@ -14,13 +14,32 @@
 * To what extent can using various signals, ranging from technical indicators to various aggregate statistics, help improve performance?
 * (The simple EMA crossover strategy is a simplistic example, but the goal here is to investigate the effect of ML on stock returns)
 
-## Result
-* The hybrid (momentum + ML) approach can surpass pure momentum-based approach
-* However, this conclusion is still tentative, and the result only holds for certain time horizon and stocks
-* The real question is, under which conditions can this hybrid approach outperform momentum-based approach?
-* Also, a simple buy-and-hold strategy can already outperform the momentum-based approach
+## Results
 
-![Cumulative return comparison](images/cum_return_comp.png)
+Main claim in this repository is based on strict out-of-sample (OOS) testing with no future-label leakage in inference:
+
+* Ticker/date range: `AAPL`, `2020-01-01` to `2025-01-01`
+* Split: chronological `70/30` (train/test), no shuffle
+* OOS evaluation window starts on `2023-07-03`
+* Strategy settings: `short_window=10`, `long_window=30`
+
+OOS cumulative return comparison (same test window):
+
+| Strategy | Return |
+| --- | ---: |
+| MAC-ML (threshold auto-selected to 0.70) | +16.29% |
+| MAC momentum baseline | +3.56% |
+| Buy & hold | +31.04% |
+
+Interpretation:
+
+* ML overlay outperformed the pure momentum baseline in this window.
+* Buy-and-hold still outperformed both active strategies in this window.
+* Performance is threshold-sensitive: with fixed `ml_threshold=0.5`, MAC-ML returned `+2.73%` (below MAC baseline).
+
+### Cumulative Return Comparison
+
+![Cumulative return comparison](images/cum_return_comp_oos.png)
 
 ## CLI Usage
 
